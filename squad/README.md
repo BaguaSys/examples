@@ -1,6 +1,6 @@
 # Fine-tuning BERT on SQuAD1.0
 
-The following is an example to start training on 8 V100 GPUs and Bert Whole Word Masking uncased model to reach a F1 > 93 on SQuAD1.1:
+The following is an example to start training on 8 V100 GPUs and Bert Whole Word Masking uncased model to reach an F1 score above 93 on SQuAD1.1:
   
 ```bash
 

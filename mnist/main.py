@@ -167,7 +167,7 @@ def main():
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
 
-    if bagua.get_rank() == 0:
+    if bagua.get_local_rank() == 0:
         dataset1 = datasets.MNIST(
             "../data", train=True, download=True, transform=transform
         )
