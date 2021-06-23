@@ -1,15 +1,16 @@
+"""
+This script is modified from the horovod benchmark script(https://github.com/horovod/horovod/blob/master/examples/pytorch/pytorch_synthetic_benchmark.py).
+You can compare the performance with the horovod script directly.
+"""
+
 import argparse
+import timeit
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data.distributed
 from torchvision import models
-
-# import horovod.torch as hvd
-import timeit
 import numpy as np
-
-# 导入bagua包
 import bagua.torch_api as bagua
 
 
@@ -25,8 +26,10 @@ parser.add_argument(
     help="use fp16 compression during allreduce",
 )
 
-parser.add_argument("--model", type=str, default="resnet50", help="model to benchmark")
-parser.add_argument("--batch-size", type=int, default=32, help="input batch size")
+parser.add_argument("--model", type=str, default="resnet50",
+                    help="model to benchmark")
+parser.add_argument("--batch-size", type=int,
+                    default=32, help="input batch size")
 
 parser.add_argument(
     "--num-warmup-batches",
@@ -63,27 +66,19 @@ parser.add_argument(
     help="allreduce, quantize, decentralize or 1bit-adam",
 )
 parser.add_argument(
-        "--amp",
-        action="store_true",
-        default=False,
-        help="use amp",
-    )
+    "--amp",
+    action="store_true",
+    default=False,
+    help="use amp",
+)
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-# 初始化分布式运行环境
 torch.cuda.set_device(bagua.get_local_rank())
-
 bagua.init_process_group()
 
 scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
-
-# hvd.init()
-
-# if args.cuda:
-#     # Horovod: pin GPU to local rank.
-#     torch.cuda.set_device(hvd.local_rank())
 
 cudnn.benchmark = True
 
@@ -96,27 +91,11 @@ lr_scaler = bagua.get_world_size() if not args.use_adasum else 1
 if args.cuda:
     # Move model to GPU.
     model.cuda()
-    # # If using GPU Adasum allreduce, scale learning rate by local_size.
-    # if args.use_adasum and hvd.nccl_built():
-    #     lr_scaler = hvd.local_size()
 
 optimizer = optim.SGD(model.parameters(), lr=0.01 * lr_scaler)
 
-# 用Bagua模型、优化器覆盖原始模型和优化器
-model, optimizer = bagua.bagua_init(model, optimizer, distributed_algorithm=args.algorithm)
-
-# # Horovod: (optional) compression algorithm.
-# compression = hvd.Compression.fp16 if args.fp16_allreduce else hvd.Compression.none
-
-# # Horovod: wrap optimizer with DistributedOptimizer.
-# optimizer = hvd.DistributedOptimizer(optimizer,
-#                                      named_parameters=model.named_parameters(),
-#                                      compression=compression,
-#                                      op=hvd.Adasum if args.use_adasum else hvd.Average)
-
-# # Horovod: broadcast parameters & optimizer state.
-# hvd.broadcast_parameters(model.state_dict(), root_rank=0)
-# hvd.broadcast_optimizer_state(optimizer, root_rank=0)
+model, optimizer = bagua.bagua_init(
+    model, optimizer, distributed_algorithm=args.algorithm)
 
 # Set up fixed fake data
 data = torch.randn(args.batch_size, 3, 224, 224)
@@ -162,7 +141,8 @@ img_secs = []
 for x in range(args.num_iters):
     time = timeit.timeit(benchmark_step, number=args.num_batches_per_iter)
     img_sec = args.batch_size * args.num_batches_per_iter / time
-    log("Iter #%d: %.1f img/sec %s" % (x, img_sec * bagua.get_world_size(), device))
+    log("Iter #%d: %.1f img/sec %s" %
+        (x, img_sec * bagua.get_world_size(), device))
     img_secs.append(img_sec)
 
 # Results
