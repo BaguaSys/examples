@@ -19,12 +19,6 @@ parser = argparse.ArgumentParser(
     description="PyTorch Synthetic Benchmark",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
-parser.add_argument(
-    "--fp16-allreduce",
-    action="store_true",
-    default=False,
-    help="use fp16 compression during allreduce",
-)
 
 parser.add_argument("--model", type=str, default="resnet50",
                     help="model to benchmark")
@@ -51,13 +45,6 @@ parser.add_argument(
     "--no-cuda", action="store_true", default=False, help="disables CUDA training"
 )
 
-parser.add_argument(
-    "--use-adasum",
-    action="store_true",
-    default=False,
-    help="use adasum algorithm to do reduction",
-)
-
 # bagua args
 parser.add_argument(
     "--algorithm",
@@ -75,7 +62,8 @@ parser.add_argument(
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-torch.cuda.set_device(bagua.get_local_rank())
+if args.cuda:
+    torch.cuda.set_device(bagua.get_local_rank())
 bagua.init_process_group()
 
 scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
@@ -85,14 +73,11 @@ cudnn.benchmark = True
 # Set up standard model.
 model = getattr(models, args.model)()
 
-# By default, Adasum doesn't need scaling up learning rate.
-lr_scaler = bagua.get_world_size() if not args.use_adasum else 1
-
 if args.cuda:
     # Move model to GPU.
     model.cuda()
 
-optimizer = optim.SGD(model.parameters(), lr=0.01 * lr_scaler)
+optimizer = optim.SGD(model.parameters(), lr=0.01 * bagua.get_world_size())
 
 model, optimizer = bagua.bagua_init(
     model, optimizer, distributed_algorithm=args.algorithm)
