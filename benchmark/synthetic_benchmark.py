@@ -45,6 +45,10 @@ parser.add_argument(
     "--no-cuda", action="store_true", default=False, help="disables CUDA training"
 )
 
+parser.add_argument(
+    "--deterministic", action="store_true", default=False, help="deterministic reproducible training"
+)
+
 # bagua args
 parser.add_argument(
     "--algorithm",
@@ -62,6 +66,9 @@ parser.add_argument(
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
+if not args.cuda:
+    raise RuntimeError("bagua currently not supporting non-GPU mode")
+
 if args.cuda:
     torch.cuda.set_device(bagua.get_local_rank())
 bagua.init_process_group()
@@ -69,6 +76,13 @@ bagua.init_process_group()
 scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
 
 cudnn.benchmark = True
+if args.deterministic:
+    cudnn.benchmark = False
+    cudnn.deterministic = True
+    np.random.seed(bagua.get_rank())
+    torch.manual_seed(bagua.get_rank())
+    torch.cuda.manual_seed(bagua.get_rank())
+
 
 # Set up standard model.
 model = getattr(models, args.model)()
