@@ -87,8 +87,7 @@ def test(model, test_loader):
 
 
 def main():
-    logging.basicConfig(
-        format="%(levelname)s:%(message)s", level=logging.ERROR)
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 
     # Training settings
     parser = argparse.ArgumentParser(description="PyTorch MNIST Example")
@@ -189,7 +188,7 @@ def main():
     else:
         torch.distributed.barrier(device_ids=[bagua.get_local_rank()])
         dataset1 = datasets.MNIST(
-           args.data_dir, train=True, download=True, transform=transform
+            args.data_dir, train=True, download=True, transform=transform
         )
 
     dataset2 = datasets.MNIST(args.data_dir, train=False, transform=transform)
@@ -212,9 +211,9 @@ def main():
     start_epoch = 1
     if os.path.exists(args.checkpoint_path):
         checkpoint = torch.load(args.checkpoint_path)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        start_epoch = checkpoint['epoch']
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        start_epoch = checkpoint["epoch"]
 
     model, optimizer = bagua.bagua_init(
         model, optimizer, distributed_algorithm=args.algorithm
@@ -227,11 +226,14 @@ def main():
         scheduler.step()
 
         if bagua.get_rank() == 0:
-            torch.save({
-                "epoch": epoch + 1,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-            }, args.checkpoint_path)
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                },
+                args.checkpoint_path,
+            )
 
 
 if __name__ == "__main__":

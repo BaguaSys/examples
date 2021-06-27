@@ -1,4 +1,4 @@
-Use the following script to start elastic training with x node * 8 gpus:
+Use the following script to start elastic training with 2 node * 8 gpus:
 
 Node 1: *(IP: 192.168.1.1, and has a free port: 1234)*
 
