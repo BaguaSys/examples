@@ -17,7 +17,7 @@ import logging
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 if bagua.get_rank() == 0:
-    logging.getLogging.infoger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
 
 # Benchmark settings
 parser = argparse.ArgumentParser(
