@@ -12,12 +12,12 @@ import torch.utils.data.distributed
 from torchvision import models
 import numpy as np
 import bagua.torch_api as bagua
-import logging.infoging
+import logging
 
 
-logging.infoging.basicConfig(format="%(levelname)s:%(message)s", level=logging.infoging.ERROR)
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 if bagua.get_rank() == 0:
-    logging.infoging.getLogging.infoger().setLevel(logging.infoging.INFO)
+    logging.getLogging.infoger().setLevel(logging.INFO)
 
 # Benchmark settings
 parser = argparse.ArgumentParser(
