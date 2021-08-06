@@ -60,13 +60,10 @@ parser.add_argument(
     "--algorithm",
     type=str,
     default="gradient_allreduce",
-    help="gradient_allreduce, bytegrad, decentralized, low_precision_decentralized or qadam",
+    help="gradient_allreduce, bytegrad, decentralized, low_precision_decentralized, qadam or async",
 )
 parser.add_argument(
-    "--amp",
-    action="store_true",
-    default=False,
-    help="use amp",
+    "--amp", action="store_true", default=False, help="use amp",
 )
 
 args = parser.parse_args()
@@ -120,6 +117,10 @@ elif args.algorithm == "qadam":
 
     optimizer = q_adam.QAdamOptimizer(model.parameters())
     algorithm = q_adam.QAdamAlgorithm(optimizer, 10)
+elif args.algorithm == "async":
+    from bagua.torch_api.algorithms import async_model_average
+
+    algorithm = async_model_average.AsyncModelAverageAlgorithm()
 else:
     raise NotImplementedError
 
@@ -163,7 +164,9 @@ img_secs = []
 for x in range(args.num_iters):
     time = timeit.timeit(benchmark_step, number=args.num_batches_per_iter)
     img_sec = args.batch_size * args.num_batches_per_iter / time
-    logging.info("Iter #%d: %.1f img/sec %s" % (x, img_sec * bagua.get_world_size(), device))
+    logging.info(
+        "Iter #%d: %.1f img/sec %s" % (x, img_sec * bagua.get_world_size(), device)
+    )
     img_secs.append(img_sec)
 
 # Results
@@ -179,3 +182,6 @@ logging.info(
         bagua.get_world_size() * img_sec_conf,
     )
 )
+
+if args.algorithm == "async":
+    algorithm.barrier(model)
