@@ -68,10 +68,10 @@ def main():
     dist.reduce(send_tensor, dst)
     bagua.reduce(send_tensor_bagua, recv_tensor_bagua, dst=dst, comm=comm)
     bagua.reduce_inplace(send_tensor_bagua, dst=dst, comm=comm)
-    assert torch.equal(send_tensor, send_tensor_bagua),\
+    assert torch.all(torch.isclose(send_tensor, send_tensor_bagua)),\
         "send_tensor:{a}, send_tensor_bagua:{b}".format(a=send_tensor, b=send_tensor_bagua)
     if bagua.get_rank() == dst:
-        assert torch.equal(send_tensor_bagua, recv_tensor_bagua),\
+        assert torch.all(torch.isclose(send_tensor_bagua, recv_tensor_bagua)),\
             "send_tensor_bagua:{a}, recv_tensor_bagua:{b}".format(a=send_tensor_bagua, b=recv_tensor_bagua)
 
     # allgather
@@ -92,7 +92,7 @@ def main():
     recv_tensor_bagua = torch.zeros(4, dtype=torch.float32).cuda()
     dist.reduce_scatter(recv_tensor, send_tensors)
     bagua.reduce_scatter(send_tensor_bagua, recv_tensor_bagua, comm=comm)
-    assert torch.equal(recv_tensor, recv_tensor_bagua),\
+    assert torch.all(torch.isclose(recv_tensor, recv_tensor_bagua)),\
         "recv_tensor:{a}, recv_tensor_bagua:{b}".format(a=recv_tensor, b=recv_tensor_bagua)
 
     # alltoall
