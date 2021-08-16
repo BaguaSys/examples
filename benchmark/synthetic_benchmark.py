@@ -157,7 +157,7 @@ def benchmark_step():
     optimizer.step()
     if batch_idx % args.log_interval == 0:
         logging.info(
-            "BatchIdx: {} TrainLoss: {:.6f}".format(
+            "BatchIdx: {} TrainLoss: {:.10f}".format(
                 batch_idx,
                 loss.item(),
             )
