@@ -63,7 +63,10 @@ parser.add_argument(
     help="gradient_allreduce, bytegrad, decentralized, low_precision_decentralized, qadam or async",
 )
 parser.add_argument(
-    "--amp", action="store_true", default=False, help="use amp",
+    "--amp",
+    action="store_true",
+    default=False,
+    help="use amp",
 )
 
 args = parser.parse_args()
@@ -184,4 +187,4 @@ logging.info(
 )
 
 if args.algorithm == "async":
-    algorithm.barrier(model)
+    algorithm.abort(model)
