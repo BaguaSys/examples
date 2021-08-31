@@ -392,6 +392,9 @@ def train(args, train_dataset, model, tokenizer):
     if bagua.get_rank() == 0:
         tb_writer.close()
 
+    if args.algorithm == "async":
+        algorithm.abort(model)
+
     return global_step, tr_loss / global_step
 
 
@@ -1099,9 +1102,6 @@ def main():
             results.update(result)
 
     logger.info("Results: {}".format(results))
-
-    if args.algorithm == "async":
-        algorithm.abort(model)
 
     return results
 
