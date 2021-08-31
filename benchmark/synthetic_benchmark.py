@@ -64,7 +64,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--async-sync-interval",
-    default=100,
+    default=50,
     type=int,
     help="Model synchronization interval(ms) for async algorithm",
 )
