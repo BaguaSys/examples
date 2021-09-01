@@ -394,6 +394,7 @@ def train(args, train_dataset, model, tokenizer):
 
     if args.algorithm == "async":
         algorithm.abort(model)
+        torch.cuda.synchronize()
 
     return global_step, tr_loss / global_step
 
