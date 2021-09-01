@@ -909,7 +909,7 @@ def main():
     )
     parser.add_argument(
         "--async-sync-interval",
-        default=100,
+        default=500,
         type=int,
         help="Model synchronization interval(ms) for async algorithm",
     )
