@@ -164,7 +164,8 @@ def train(args, train_dataset, model, tokenizer):
         from bagua.torch_api.algorithms import async_model_average
 
         algorithm = async_model_average.AsyncModelAverageAlgorithm(
-            sync_interval_ms=args.async_sync_interval
+            sync_interval_ms=args.async_sync_interval,
+            warmup_steps=args.async_warmup_steps
         )
     else:
         raise NotImplementedError
@@ -309,7 +310,7 @@ def train(args, train_dataset, model, tokenizer):
             outputs = model(**inputs)
             # model outputs are always tuple in transformers (see doc)
             loss = outputs[0]
-
+            
             if args.n_gpu > 1:
                 loss = (
                     loss.mean()
@@ -918,6 +919,12 @@ def main():
         default=500,
         type=int,
         help="Model synchronization interval(ms) for async algorithm",
+    )
+    parser.add_argument(
+        "--async-warmup-steps",
+        default=100,
+        type=int,
+        help="Warmup(allreduce) steps for async algorithm",
     )
     args = parser.parse_args()
 
