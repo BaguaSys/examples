@@ -149,9 +149,16 @@ parser.add_argument(
 
 parser.add_argument(
     "--async-sync-interval",
-    default=100,
+    default=500,
     type=int,
     help="Model synchronization interval(ms) for async algorithm",
+)
+
+parser.add_argument(
+    "--async-warmup-steps",
+    default=100,
+    type=int,
+    help="Warmup(allreduce) steps for async algorithm",
 )
 
 best_acc1 = 0
@@ -238,7 +245,8 @@ def main_worker(args):
         from bagua.torch_api.algorithms import async_model_average
 
         algorithm = async_model_average.AsyncModelAverageAlgorithm(
-            sync_interval_ms=args.async_sync_interval
+            sync_interval_ms=args.async_sync_interval,
+            warmup_steps=args.async_warmup_steps,
         )
     else:
         raise NotImplementedError
@@ -439,6 +447,9 @@ def train(train_loader, model, criterion, optimizer, scaler, epoch, args):
         if args.prof >= 0 and i == args.prof + 10:
             print("Profiling ended at iteration {}".format(i))
             torch.cuda.cudart().cudaProfilerStop()
+
+            if args.algorithm == "async":
+                model.bagua_algorithm.abort(model, grace_period_seconds=0)
             quit()
 
 
