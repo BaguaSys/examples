@@ -232,7 +232,9 @@ def main():
     elif args.algorithm == "qadam":
         from bagua.torch_api.algorithms import q_adam
 
-        optimizer = q_adam.QAdamOptimizer(model.parameters(), lr=args.lr, warmup_steps=100)
+        optimizer = q_adam.QAdamOptimizer(
+            model.parameters(), lr=args.lr, warmup_steps=100
+        )
         algorithm = q_adam.QAdamAlgorithm(optimizer)
     elif args.algorithm == "async":
         from bagua.torch_api.algorithms import async_model_average
@@ -250,14 +252,19 @@ def main():
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
+        if args.algorithm == "async":
+            algorithm.resume()
+
         train(args, model, train_loader, optimizer, epoch)
+
+        if args.algorithm == "async":
+            algorithm.abort()
 
         test(model, test_loader)
         scheduler.step()
 
     if args.algorithm == "async":
-        algorithm.abort(model)
-
+        algorithm.destroy()
     if args.save_model:
         torch.save(model.state_dict(), "mnist_cnn.pt")
 

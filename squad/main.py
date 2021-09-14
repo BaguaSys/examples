@@ -165,7 +165,7 @@ def train(args, train_dataset, model, tokenizer):
 
         algorithm = async_model_average.AsyncModelAverageAlgorithm(
             sync_interval_ms=args.async_sync_interval,
-            warmup_steps=args.async_warmup_steps
+            warmup_steps=args.async_warmup_steps,
         )
     else:
         raise NotImplementedError
@@ -310,7 +310,7 @@ def train(args, train_dataset, model, tokenizer):
             outputs = model(**inputs)
             # model outputs are always tuple in transformers (see doc)
             loss = outputs[0]
-            
+
             if args.n_gpu > 1:
                 loss = (
                     loss.mean()
@@ -399,8 +399,7 @@ def train(args, train_dataset, model, tokenizer):
         tb_writer.close()
 
     if args.algorithm == "async":
-        algorithm.abort(model)
-        torch.cuda.synchronize()
+        algorithm.destroy()
 
     return global_step, tr_loss / global_step
 

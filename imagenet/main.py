@@ -239,7 +239,9 @@ def main_worker(args):
     elif args.algorithm == "qadam":
         from bagua.torch_api.algorithms import q_adam
 
-        optimizer = q_adam.QAdamOptimizer(model.parameters(), lr=args.lr, warmup_steps=100)
+        optimizer = q_adam.QAdamOptimizer(
+            model.parameters(), lr=args.lr, warmup_steps=100
+        )
         algorithm = q_adam.QAdamAlgorithm(optimizer)
     elif args.algorithm == "async":
         from bagua.torch_api.algorithms import async_model_average
@@ -343,8 +345,14 @@ def main_worker(args):
         if args.distributed:
             train_sampler.set_epoch(epoch)
 
+        if args.algorithm == "async":
+            algorithm.resume()
+
         # train for one epoch
         train(train_loader, model, criterion, optimizer, scaler, epoch, args)
+
+        if args.algorithm == "async":
+            algorithm.abort()
 
         # evaluate on validation set
         acc1 = validate(val_loader, model, criterion, epoch, args)
@@ -366,7 +374,7 @@ def main_worker(args):
             )
 
     if args.algorithm == "async":
-        algorithm.abort(model)
+        algorithm.destroy()
 
 
 def train(train_loader, model, criterion, optimizer, scaler, epoch, args):
@@ -423,10 +431,17 @@ def train(train_loader, model, criterion, optimizer, scaler, epoch, args):
         top5.update(acc5[0], images.size(0))
 
         if args.prof >= 0:
-            torch.cuda.nvtx.range_push("optimizer.step()")
+            torch.cuda.nvtx.range_push("backward")
 
         # compute gradient and do SGD step
         scaler.scale(loss).backward()
+
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_pop()
+
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_push("optimizer.step()")
+
         scaler.step(optimizer)
         scaler.update()
 
@@ -449,7 +464,7 @@ def train(train_loader, model, criterion, optimizer, scaler, epoch, args):
             torch.cuda.cudart().cudaProfilerStop()
 
             if args.algorithm == "async":
-                model.bagua_algorithm.abort(model, grace_period_seconds=0)
+                model.bagua_algorithm.destroy()
             quit()
 
 
