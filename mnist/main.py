@@ -240,7 +240,7 @@ def main():
         from bagua.torch_api.algorithms import async_model_average
 
         algorithm = async_model_average.AsyncModelAverageAlgorithm(
-            sync_interval_ms=args.async_sync_interval
+            sync_interval_ms=args.async_sync_interval,
         )
     else:
         raise NotImplementedError
@@ -253,18 +253,16 @@ def main():
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
         if args.algorithm == "async":
-            algorithm.resume()
+            algorithm.resume(model)
 
         train(args, model, train_loader, optimizer, epoch)
 
         if args.algorithm == "async":
-            algorithm.abort()
+            algorithm.abort(model)
 
         test(model, test_loader)
         scheduler.step()
 
-    if args.algorithm == "async":
-        algorithm.destroy()
     if args.save_model:
         torch.save(model.state_dict(), "mnist_cnn.pt")
 

@@ -346,13 +346,13 @@ def main_worker(args):
             train_sampler.set_epoch(epoch)
 
         if args.algorithm == "async":
-            algorithm.resume()
+            algorithm.resume(model)
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, scaler, epoch, args)
 
         if args.algorithm == "async":
-            algorithm.abort()
+            algorithm.abort(model)
 
         # evaluate on validation set
         acc1 = validate(val_loader, model, criterion, epoch, args)
@@ -372,9 +372,6 @@ def main_worker(args):
                 },
                 is_best,
             )
-
-    if args.algorithm == "async":
-        algorithm.destroy()
 
 
 def train(train_loader, model, criterion, optimizer, scaler, epoch, args):
@@ -464,7 +461,7 @@ def train(train_loader, model, criterion, optimizer, scaler, epoch, args):
             torch.cuda.cudart().cudaProfilerStop()
 
             if args.algorithm == "async":
-                model.bagua_algorithm.destroy()
+                model.bagua_algorithm.abort(model)
             quit()
 
 

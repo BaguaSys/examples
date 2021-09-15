@@ -195,6 +195,9 @@ logging.info("Number of %ss: %d" % (device, bagua.get_world_size()))
 
 # Warm-up
 logging.info("Running warmup...")
+if args.algorithm == "async":
+    algorithm.resume(model)
+
 timeit.timeit(benchmark_step, number=args.num_warmup_batches)
 
 # Benchmark
@@ -223,4 +226,4 @@ logging.info(
 )
 
 if args.algorithm == "async":
-    algorithm.destroy()
+    algorithm.abort(model)
